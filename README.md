@@ -1,5 +1,10 @@
 # PhenoProject
 
+[![Build](https://img.shields.io/github/actions/workflow/status/KooshaPari/PhenoProject/ci.yml?branch=main&label=build)](https://github.com/KooshaPari/PhenoProject/actions)
+[![Release](https://img.shields.io/github/v/release/KooshaPari/PhenoProject?include_prereleases&sort=semver)](https://github.com/KooshaPari/PhenoProject/releases)
+[![License](https://img.shields.io/github/license/KooshaPari/PhenoProject)](LICENSE)
+[![Phenotype](https://img.shields.io/badge/Phenotype-org-blueviolet)](https://github.com/KooshaPari)
+
 Phenotype project & workflow management workspace.
 
 ## Status
