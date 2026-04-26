@@ -1,5 +1,7 @@
 # PhenoProject
 
+**Status:** maintenance
+
 Phenotype project and workflow management framework for tracking, organizing, and executing work across the Phenotype ecosystem.
 
 ## Purpose
