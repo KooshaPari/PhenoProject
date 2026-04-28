@@ -85,6 +85,15 @@ tasks:
           package_manager() {
             dir=$1
             while [ "$dir" != "/" ]; do
+              manifest="$dir/package.json"
+              if [ -f "$manifest" ]; then
+                declared_pm=$(node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const value = String(pkg.packageManager || "").split("@")[0]; if (value) console.log(value)' "$manifest")
+                if [ -n "$declared_pm" ]; then
+                  echo "$declared_pm"
+                  return 0
+                fi
+              fi
+
               if [ -f "$dir/pnpm-workspace.yaml" ] || [ -f "$dir/pnpm-lock.yaml" ]; then
                 echo pnpm
                 return 0
