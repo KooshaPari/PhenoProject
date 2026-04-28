@@ -19,7 +19,7 @@ tasks:
       - task: _python
         vars:
           KIND: build
-          CMD: run python -m compileall .
+          CMD: run --no-project python -m compileall -q . -x '(^|/)(\\.venv|__pycache__|\\.git|node_modules)/'
 
   test:
     desc: Run detected project tests
@@ -79,8 +79,10 @@ tasks:
           set -eu
 
           if find tests -name '*_test.go' -type f | grep -q .; then
-            echo "go: GO111MODULE=off go {{.GO_ARGS}}"
-            GO111MODULE=off go {{.GO_ARGS}}
+            cache_dir="${TMPDIR:-/tmp}/phenoproject-go-build-cache"
+            mkdir -p "$cache_dir"
+            echo "go: GO111MODULE=off GOCACHE=$cache_dir go {{.GO_ARGS}}"
+            GO111MODULE=off GOCACHE="$cache_dir" go {{.GO_ARGS}}
           fi
 
   _go_lint:
@@ -206,7 +208,7 @@ tasks:
           fi
 
           find . \
-            -maxdepth 3 \
+            -maxdepth 5 \
             \( -path '*/.git' -o -path '*/node_modules' -o -path '*/.venv' \) -prune \
             -o -name pyproject.toml -type f -print \
             | sort \
