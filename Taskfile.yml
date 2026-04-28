@@ -7,57 +7,62 @@ tasks:
       - task --list
 
   build:
-    desc: Build every detected project using its native toolchain
+    desc: Build detected JavaScript/TypeScript projects and root smoke tests
     cmds:
       - task: _go_smoke
         vars:
-          KIND: build
-          GO_CMD: test -run '^$' ./tests
-      - task: _run
+          GO_ARGS: test -run '^$' ./tests
+      - task: _js
         vars:
           KIND: build
-          JS_SCRIPTS: build
-          GO_CMD: build ./...
-          RUST_CMD: build
-          PY_CMD: build
+          SCRIPTS: build
 
   test:
-    desc: Run tests for every detected project using its native toolchain
+    desc: Run detected project tests
     cmds:
       - task: _go_smoke
         vars:
-          KIND: test
-          GO_CMD: test ./tests
-      - task: _run
+          GO_ARGS: test ./tests
+      - task: _js
         vars:
           KIND: test
-          JS_SCRIPTS: check test:ci test
-          GO_CMD: test ./...
-          RUST_CMD: test
-          PY_CMD: run pytest
+          SCRIPTS: test:ci test
+      - task: _python
+        vars:
+          KIND: test
+          CMD: run pytest
 
   lint:
-    desc: Run linters for every detected project using its native toolchain
+    desc: Run detected project linters
     cmds:
-      - task: _run
+      - task: _js
         vars:
           KIND: lint
-          JS_SCRIPTS: check:lint lint check
-          GO_TOOL: golangci-lint
-          GO_CMD: run
-          RUST_CMD: clippy --all-targets --all-features
-          PY_CMD: run ruff check .
+          SCRIPTS: check:lint lint check
+      - task: _python
+        vars:
+          KIND: lint
+          CMD: run ruff check .
 
   clean:
-    desc: Remove build artifacts for every detected project
+    desc: Remove common build and test artifacts
     cmds:
-      - task: _run
+      - task: _js
         vars:
           KIND: clean
-          JS_SCRIPTS: clean
-          GO_CMD: clean -cache -testcache
-          RUST_CMD: clean
-          PY_CMD: rm -rf build dist .pytest_cache .ruff_cache __pycache__
+          SCRIPTS: clean
+      - task: _python
+        vars:
+          KIND: clean
+          CMD: cache clean
+      - |
+          find . \
+            \( -path '*/.git' -o -path '*/node_modules' -o -path '*/.venv' \) -prune \
+            -o \( -name dist -o -name build -o -name coverage -o -name .turbo \
+              -o -name .next -o -name .react-router -o -name .vite \
+              -o -name .vitest -o -name .pytest_cache -o -name .ruff_cache \
+              -o -name __pycache__ \) -type d -print \
+            | xargs -r rm -rf
 
   _go_smoke:
     internal: true
@@ -67,11 +72,11 @@ tasks:
           set -eu
 
           if find tests -name '*_test.go' -type f | grep -q .; then
-            echo "{{.KIND}}: ./tests (go {{.GO_CMD}})"
-            GO111MODULE=off go {{.GO_CMD}}
+            echo "go: GO111MODULE=off go {{.GO_ARGS}}"
+            GO111MODULE=off go {{.GO_ARGS}}
           fi
 
-  _run:
+  _js:
     internal: true
     silent: true
     cmds:
@@ -79,120 +84,78 @@ tasks:
           set -eu
 
           has_script() {
-            node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const script = process.argv[2]; process.exit(pkg.scripts && Object.prototype.hasOwnProperty.call(pkg.scripts, script) ? 0 : 1)' "$1" "$2"
+            node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const script = process.argv[2]; process.exit(pkg.scripts && Object.hasOwn(pkg.scripts, script) ? 0 : 1)' "$1" "$2"
           }
 
           package_manager() {
             dir=$1
-            while [ "$dir" != "/" ]; do
-              manifest="$dir/package.json"
-              if [ -f "$manifest" ]; then
-                declared_pm=$(node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const value = String(pkg.packageManager || "").split("@")[0]; if (value) console.log(value)' "$manifest")
-                if [ -n "$declared_pm" ]; then
-                  echo "$declared_pm"
-                  return 0
-                fi
-              fi
+            declared_pm=$(node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const value = String(pkg.packageManager || "").split("@")[0]; if (value) console.log(value)' "$dir/package.json")
+            if [ -n "$declared_pm" ]; then
+              echo "$declared_pm"
+            elif [ -f "$dir/pnpm-workspace.yaml" ] || [ -f "$dir/pnpm-lock.yaml" ]; then
+              echo pnpm
+            elif [ -f "$dir/bun.lock" ] || [ -f "$dir/bun.lockb" ]; then
+              echo bun
+            elif [ -f "$dir/yarn.lock" ]; then
+              echo yarn
+            else
+              echo npm
+            fi
+          }
 
-              if [ -f "$dir/pnpm-workspace.yaml" ] || [ -f "$dir/pnpm-lock.yaml" ]; then
-                echo pnpm
-                return 0
-              elif [ -f "$dir/bun.lock" ] || [ -f "$dir/bun.lockb" ]; then
-                echo bun
-                return 0
-              elif [ -f "$dir/yarn.lock" ]; then
-                echo yarn
-                return 0
-              elif [ -f "$dir/package-lock.json" ]; then
-                echo npm
+          has_parent_package() {
+            dir=$(dirname "$(dirname "$1")")
+            while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+              if [ -f "$dir/package.json" ]; then
                 return 0
               fi
-
-              [ "$dir" = "." ] && break
               dir=$(dirname "$dir")
             done
-
-            echo npm
+            return 1
           }
 
-          run_js_task() {
-            manifest=$1
-            shift
-            dir=$(dirname "$manifest")
-
-            if [ "{{.KIND}}" = "clean" ]; then
-              echo "clean: $dir (remove JavaScript build artifacts)"
-              rm -rf "$dir/dist" "$dir/build" "$dir/coverage" "$dir/logs" "$dir/.turbo" "$dir/.next" "$dir/.react-router" "$dir/.vite" "$dir/.vitest"
-              return 0
-            fi
-
-            pm=$(package_manager "$dir")
-
-            for script in "$@"; do
-              if has_script "$manifest" "$script"; then
-                echo "{{.KIND}}: $dir ($pm run $script)"
-                (cd "$dir" && "$pm" run "$script")
-                return 0
+          find . \
+            \( -path '*/.git' -o -path '*/node_modules' -o -path '*/dist' \
+              -o -path '*/build' -o -path '*/.turbo' -o -path '*/.next' \) -prune \
+            -o -name package.json -type f -print \
+            | sort \
+            | while IFS= read -r manifest; do
+              if has_parent_package "$manifest"; then
+                continue
               fi
+
+              dir=$(dirname "$manifest")
+              pm=$(package_manager "$dir")
+
+              for script in {{.SCRIPTS}}; do
+                if has_script "$manifest" "$script"; then
+                  echo "{{.KIND}}: $dir ($pm run $script)"
+                  (cd "$dir" && "$pm" run "$script")
+                  continue 2
+                fi
+              done
+
+              echo "{{.KIND}}: skipping $dir (no matching package script)"
             done
 
-            echo "{{.KIND}}: skipping $dir (no matching package script)"
-          }
+  _python:
+    internal: true
+    silent: true
+    cmds:
+      - |
+          set -eu
 
-          run_detected_command() {
-            dir=$1
-            tool=$2
-            shift 2
+          if ! command -v uv >/dev/null 2>&1; then
+            echo "{{.KIND}}: skipping Python projects (uv not installed)"
+            exit 0
+          fi
 
-            if ! command -v "$tool" >/dev/null 2>&1; then
-              echo "{{.KIND}}: skipping $dir ($tool not installed)"
-              return 0
-            fi
-
-            echo "{{.KIND}}: $dir ($tool $*)"
-            (cd "$dir" && "$tool" "$@")
-          }
-
-          find_manifests() {
-            find . \
-              -mindepth 1 \
-              -maxdepth 6 \
-              \( -path '*/.git' \
-                -o -path '*/node_modules' \
-                -o -path '*/dist' \
-                -o -path '*/build' \
-                -o -path '*/target' \
-                -o -path '*/.venv' \
-                -o -path '*/.turbo' \
-                -o -path '*/.next' \) -prune \
-              -o \( -name package.json \
-                -o -name go.mod \
-                -o -name Cargo.toml \
-                -o -name pyproject.toml \) -type f -print \
-              | sort
-          }
-
-          find_manifests | while IFS= read -r manifest; do
-            [ -n "$manifest" ] || continue
-
-            case "$manifest" in
-              */package.json)
-                run_js_task "$manifest" {{.JS_SCRIPTS}}
-                ;;
-              */go.mod)
-                run_detected_command "$(dirname "$manifest")" {{default "go" .GO_TOOL}} {{.GO_CMD}}
-                ;;
-              */Cargo.toml)
-                run_detected_command "$(dirname "$manifest")" cargo {{.RUST_CMD}}
-                ;;
-              */pyproject.toml)
-                if [ "{{.KIND}}" = "clean" ]; then
-                  dir=$(dirname "$manifest")
-                  echo "clean: $dir (remove Python build caches)"
-                  rm -rf "$dir/build" "$dir/dist" "$dir/.pytest_cache" "$dir/.ruff_cache" "$dir/__pycache__"
-                else
-                  run_detected_command "$(dirname "$manifest")" uv {{.PY_CMD}}
-                fi
-                ;;
-            esac
-          done
+          find . \
+            \( -path '*/.git' -o -path '*/node_modules' -o -path '*/.venv' \) -prune \
+            -o -name pyproject.toml -type f -print \
+            | sort \
+            | while IFS= read -r manifest; do
+              dir=$(dirname "$manifest")
+              echo "{{.KIND}}: $dir (uv {{.CMD}})"
+              (cd "$dir" && uv {{.CMD}})
+            done
