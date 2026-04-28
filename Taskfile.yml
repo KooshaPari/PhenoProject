@@ -259,7 +259,7 @@ tasks:
           fi
 
           find . \
-            -maxdepth 6 \
+            -maxdepth 3 \
             \( -path '*/.git' -o -path '*/node_modules' -o -path '*/.venv' \
               -o -path '*/__pycache__' -o -path '*/.pytest_cache' \) -prune \
             -o -name pyproject.toml -type f -print \
