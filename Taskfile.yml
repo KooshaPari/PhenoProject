@@ -7,81 +7,253 @@ tasks:
       - task --list
 
   build:
-    desc: Build all detected projects
+    desc: Build every detected project using its native toolchain
     cmds:
-      - task: build:planify
-      - task: build:kaskman
+      - |
+          set -eu
+
+          has_script() {
+            node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const name = process.argv[2]; process.exit(pkg.scripts && Object.prototype.hasOwnProperty.call(pkg.scripts, name) ? 0 : 1)' "$1" "$2"
+          }
+
+          run_js_task() {
+            manifest=$1
+            shift
+            dir=$(dirname "$manifest")
+
+            if [ -f "$dir/pnpm-workspace.yaml" ] || [ -f "$dir/pnpm-lock.yaml" ]; then
+              pm=pnpm
+            elif [ -f "$dir/bun.lock" ]; then
+              pm=bun
+            else
+              pm=npm
+            fi
+
+            for script in "$@"; do
+              if has_script "$manifest" "$script"; then
+                echo "build: $dir ($pm run $script)"
+                (cd "$dir" && "$pm" run "$script")
+                return 0
+              fi
+            done
+
+            echo "build: skipping $dir (no matching script)"
+          }
+
+          find . -mindepth 2 -maxdepth 2 \
+            \( -name package.json -o -name go.mod -o -name Cargo.toml -o -name pyproject.toml \) \
+            -not -path '*/.git/*' \
+            | while IFS= read -r manifest; do
+              [ -n "$manifest" ] || continue
+
+              case "$manifest" in
+                */package.json)
+                  run_js_task "$manifest" build
+                  ;;
+                */go.mod)
+                  dir=$(dirname "$manifest")
+                  echo "build: $dir (go build ./...)"
+                  (cd "$dir" && go build ./...)
+                  ;;
+                */Cargo.toml)
+                  dir=$(dirname "$manifest")
+                  echo "build: $dir (cargo build)"
+                  (cd "$dir" && cargo build)
+                  ;;
+                */pyproject.toml)
+                  dir=$(dirname "$manifest")
+                  echo "build: $dir (uv build)"
+                  (cd "$dir" && uv build)
+                  ;;
+              esac
+            done
 
   test:
-    desc: Run tests for all detected projects
+    desc: Run tests for every detected project using its native toolchain
     cmds:
-      - task: test:planify
-      - task: test:kaskman
+      - |
+          set -eu
+
+          has_script() {
+            node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const name = process.argv[2]; process.exit(pkg.scripts && Object.prototype.hasOwnProperty.call(pkg.scripts, name) ? 0 : 1)' "$1" "$2"
+          }
+
+          run_js_task() {
+            manifest=$1
+            shift
+            dir=$(dirname "$manifest")
+
+            if [ -f "$dir/pnpm-workspace.yaml" ] || [ -f "$dir/pnpm-lock.yaml" ]; then
+              pm=pnpm
+            elif [ -f "$dir/bun.lock" ]; then
+              pm=bun
+            else
+              pm=npm
+            fi
+
+            for script in "$@"; do
+              if has_script "$manifest" "$script"; then
+                echo "test: $dir ($pm run $script)"
+                (cd "$dir" && "$pm" run "$script")
+                return 0
+              fi
+            done
+
+            echo "test: skipping $dir (no matching script)"
+          }
+
+          find . -mindepth 2 -maxdepth 2 \
+            \( -name package.json -o -name go.mod -o -name Cargo.toml -o -name pyproject.toml \) \
+            -not -path '*/.git/*' \
+            | while IFS= read -r manifest; do
+              [ -n "$manifest" ] || continue
+
+              case "$manifest" in
+                */package.json)
+                  run_js_task "$manifest" check test:ci test
+                  ;;
+                */go.mod)
+                  dir=$(dirname "$manifest")
+                  echo "test: $dir (go test ./...)"
+                  (cd "$dir" && go test ./...)
+                  ;;
+                */Cargo.toml)
+                  dir=$(dirname "$manifest")
+                  echo "test: $dir (cargo test)"
+                  (cd "$dir" && cargo test)
+                  ;;
+                */pyproject.toml)
+                  dir=$(dirname "$manifest")
+                  echo "test: $dir (uv run pytest)"
+                  (cd "$dir" && uv run pytest)
+                  ;;
+              esac
+            done
 
   lint:
-    desc: Run linters for all detected projects
+    desc: Run linters for every detected project using its native toolchain
     cmds:
-      - task: lint:planify
-      - task: lint:kaskman
+      - |
+          set -eu
+
+          has_script() {
+            node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const name = process.argv[2]; process.exit(pkg.scripts && Object.prototype.hasOwnProperty.call(pkg.scripts, name) ? 0 : 1)' "$1" "$2"
+          }
+
+          run_js_task() {
+            manifest=$1
+            shift
+            dir=$(dirname "$manifest")
+
+            if [ -f "$dir/pnpm-workspace.yaml" ] || [ -f "$dir/pnpm-lock.yaml" ]; then
+              pm=pnpm
+            elif [ -f "$dir/bun.lock" ]; then
+              pm=bun
+            else
+              pm=npm
+            fi
+
+            for script in "$@"; do
+              if has_script "$manifest" "$script"; then
+                echo "lint: $dir ($pm run $script)"
+                (cd "$dir" && "$pm" run "$script")
+                return 0
+              fi
+            done
+
+            echo "lint: skipping $dir (no matching script)"
+          }
+
+          find . -mindepth 2 -maxdepth 2 \
+            \( -name package.json -o -name go.mod -o -name Cargo.toml -o -name pyproject.toml \) \
+            -not -path '*/.git/*' \
+            | while IFS= read -r manifest; do
+              [ -n "$manifest" ] || continue
+
+              case "$manifest" in
+                */package.json)
+                  run_js_task "$manifest" check:lint lint check
+                  ;;
+                */go.mod)
+                  dir=$(dirname "$manifest")
+                  if command -v golangci-lint >/dev/null 2>&1; then
+                    echo "lint: $dir (golangci-lint run)"
+                    (cd "$dir" && golangci-lint run)
+                  else
+                    echo "lint: skipping $dir (golangci-lint not installed)"
+                  fi
+                  ;;
+                */Cargo.toml)
+                  dir=$(dirname "$manifest")
+                  echo "lint: $dir (cargo clippy --all-targets --all-features)"
+                  (cd "$dir" && cargo clippy --all-targets --all-features)
+                  ;;
+                */pyproject.toml)
+                  dir=$(dirname "$manifest")
+                  echo "lint: $dir (uv run ruff check .)"
+                  (cd "$dir" && uv run ruff check .)
+                  ;;
+              esac
+            done
 
   clean:
-    desc: Remove build artifacts for all detected projects
+    desc: Remove build artifacts for every detected project
     cmds:
-      - task: clean:planify
-      - task: clean:kaskman
+      - |
+          set -eu
 
-  build:planify:
-    internal: true
-    status:
-      - test -f rust/Planify/package.json
-    cmds:
-      - cd rust/Planify && pnpm build
+          has_script() {
+            node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const name = process.argv[2]; process.exit(pkg.scripts && Object.prototype.hasOwnProperty.call(pkg.scripts, name) ? 0 : 1)' "$1" "$2"
+          }
 
-  test:planify:
-    internal: true
-    status:
-      - test -f rust/Planify/package.json
-    cmds:
-      - cd rust/Planify && pnpm check
+          run_js_task() {
+            manifest=$1
+            shift
+            dir=$(dirname "$manifest")
 
-  lint:planify:
-    internal: true
-    status:
-      - test -f rust/Planify/package.json
-    cmds:
-      - cd rust/Planify && pnpm check:lint
+            if [ -f "$dir/pnpm-workspace.yaml" ] || [ -f "$dir/pnpm-lock.yaml" ]; then
+              pm=pnpm
+            elif [ -f "$dir/bun.lock" ]; then
+              pm=bun
+            else
+              pm=npm
+            fi
 
-  clean:planify:
-    internal: true
-    status:
-      - test -f rust/Planify/package.json
-    cmds:
-      - cd rust/Planify && pnpm clean
+            for script in "$@"; do
+              if has_script "$manifest" "$script"; then
+                echo "clean: $dir ($pm run $script)"
+                (cd "$dir" && "$pm" run "$script")
+                return 0
+              fi
+            done
 
-  build:kaskman:
-    internal: true
-    status:
-      - test -f go/KaskMan/package.json
-    cmds:
-      - cd go/KaskMan && npm run build
+            echo "clean: skipping $dir (no matching script)"
+          }
 
-  test:kaskman:
-    internal: true
-    status:
-      - test -f go/KaskMan/package.json
-    cmds:
-      - cd go/KaskMan && npm run test:ci
+          find . -mindepth 2 -maxdepth 2 \
+            \( -name package.json -o -name go.mod -o -name Cargo.toml -o -name pyproject.toml \) \
+            -not -path '*/.git/*' \
+            | while IFS= read -r manifest; do
+              [ -n "$manifest" ] || continue
 
-  lint:kaskman:
-    internal: true
-    status:
-      - test -f go/KaskMan/package.json
-    cmds:
-      - cd go/KaskMan && npm run lint
-
-  clean:kaskman:
-    internal: true
-    status:
-      - test -f go/KaskMan/package.json
-    cmds:
-      - cd go/KaskMan && npm run clean
+              case "$manifest" in
+                */package.json)
+                  run_js_task "$manifest" clean
+                  ;;
+                */go.mod)
+                  dir=$(dirname "$manifest")
+                  echo "clean: $dir (go clean -cache -testcache)"
+                  (cd "$dir" && go clean -cache -testcache)
+                  ;;
+                */Cargo.toml)
+                  dir=$(dirname "$manifest")
+                  echo "clean: $dir (cargo clean)"
+                  (cd "$dir" && cargo clean)
+                  ;;
+                */pyproject.toml)
+                  dir=$(dirname "$manifest")
+                  echo "clean: $dir (remove Python build caches)"
+                  rm -rf "$dir/build" "$dir/dist" "$dir/.pytest_cache" "$dir/.ruff_cache" "$dir/__pycache__"
+                  ;;
+              esac
+            done
