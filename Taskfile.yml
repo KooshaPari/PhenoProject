@@ -1,0 +1,87 @@
+version: "3"
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: Build all detected projects
+    cmds:
+      - task: build:planify
+      - task: build:kaskman
+
+  test:
+    desc: Run tests for all detected projects
+    cmds:
+      - task: test:planify
+      - task: test:kaskman
+
+  lint:
+    desc: Run linters for all detected projects
+    cmds:
+      - task: lint:planify
+      - task: lint:kaskman
+
+  clean:
+    desc: Remove build artifacts for all detected projects
+    cmds:
+      - task: clean:planify
+      - task: clean:kaskman
+
+  build:planify:
+    internal: true
+    status:
+      - test -f rust/Planify/package.json
+    cmds:
+      - cd rust/Planify && pnpm build
+
+  test:planify:
+    internal: true
+    status:
+      - test -f rust/Planify/package.json
+    cmds:
+      - cd rust/Planify && pnpm check
+
+  lint:planify:
+    internal: true
+    status:
+      - test -f rust/Planify/package.json
+    cmds:
+      - cd rust/Planify && pnpm check:lint
+
+  clean:planify:
+    internal: true
+    status:
+      - test -f rust/Planify/package.json
+    cmds:
+      - cd rust/Planify && pnpm clean
+
+  build:kaskman:
+    internal: true
+    status:
+      - test -f go/KaskMan/package.json
+    cmds:
+      - cd go/KaskMan && npm run build
+
+  test:kaskman:
+    internal: true
+    status:
+      - test -f go/KaskMan/package.json
+    cmds:
+      - cd go/KaskMan && npm run test:ci
+
+  lint:kaskman:
+    internal: true
+    status:
+      - test -f go/KaskMan/package.json
+    cmds:
+      - cd go/KaskMan && npm run lint
+
+  clean:kaskman:
+    internal: true
+    status:
+      - test -f go/KaskMan/package.json
+    cmds:
+      - cd go/KaskMan && npm run clean
