@@ -12,6 +12,10 @@ tasks:
       - task: _go_smoke
         vars:
           GO_ARGS: test -run '^$' ./tests
+      - task: _rust
+        vars:
+          KIND: build
+          ARGS: check --workspace
       - task: _js
         vars:
           KIND: build
@@ -27,6 +31,10 @@ tasks:
       - task: _go_smoke
         vars:
           GO_ARGS: test ./tests
+      - task: _rust
+        vars:
+          KIND: test
+          ARGS: test --workspace
       - task: _js
         vars:
           KIND: test
@@ -40,6 +48,14 @@ tasks:
     desc: Run detected project linters
     cmds:
       - task: _go_lint
+      - task: _rust
+        vars:
+          KIND: lint
+          ARGS: fmt --all -- --check
+      - task: _rust
+        vars:
+          KIND: lint
+          ARGS: clippy --workspace --all-targets -- -D warnings
       - task: _js
         vars:
           KIND: lint
@@ -66,7 +82,7 @@ tasks:
             -o \( -name dist -o -name build -o -name coverage -o -name .turbo \
               -o -name .next -o -name .react-router -o -name .vite \
               -o -name .vitest -o -name .pytest_cache -o -name .ruff_cache \
-              -o -name .cache -o -name __pycache__ \) -type d -print \
+              -o -name .cache -o -name __pycache__ -o -name target \) -type d -print \
             | while IFS= read -r path; do
                 rm -rf "$path"
               done
@@ -107,6 +123,44 @@ tasks:
           fi
 
           echo "go: gofmt check passed"
+
+  _rust:
+    internal: true
+    silent: true
+    cmds:
+      - |
+          set -eu
+
+          if ! command -v cargo >/dev/null 2>&1; then
+            echo "{{.KIND}}: skipping Rust projects (cargo not installed)"
+            exit 0
+          fi
+
+          has_parent_cargo() {
+            dir=$(dirname "$(dirname "$1")")
+            while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+              if [ -f "$dir/Cargo.toml" ]; then
+                return 0
+              fi
+              dir=$(dirname "$dir")
+            done
+            return 1
+          }
+
+          find . \
+            -maxdepth 4 \
+            \( -path '*/.git' -o -path '*/node_modules' -o -path '*/target' \) -prune \
+            -o -name Cargo.toml -type f -print \
+            | sort \
+            | while IFS= read -r manifest; do
+              if has_parent_cargo "$manifest"; then
+                continue
+              fi
+
+              dir=$(dirname "$manifest")
+              echo "{{.KIND}}: $dir (cargo {{.ARGS}})"
+              (cd "$dir" && cargo {{.ARGS}})
+            done
 
   _js:
     internal: true
