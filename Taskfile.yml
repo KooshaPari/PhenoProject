@@ -13,9 +13,9 @@ tasks:
         vars:
           KIND: build
           JS_SCRIPTS: build
-          GO_CMD: go build ./...
-          RUST_CMD: cargo build
-          PY_CMD: uv build
+          GO_CMD: build ./...
+          RUST_CMD: build
+          PY_CMD: build
 
   test:
     desc: Run tests for every detected project using its native toolchain
@@ -24,9 +24,9 @@ tasks:
         vars:
           KIND: test
           JS_SCRIPTS: check test:ci test
-          GO_CMD: go test ./...
-          RUST_CMD: cargo test
-          PY_CMD: uv run pytest
+          GO_CMD: test ./...
+          RUST_CMD: test
+          PY_CMD: run pytest
 
   lint:
     desc: Run linters for every detected project using its native toolchain
@@ -35,9 +35,10 @@ tasks:
         vars:
           KIND: lint
           JS_SCRIPTS: check:lint lint check
-          GO_CMD: golangci-lint run
-          RUST_CMD: cargo clippy --all-targets --all-features
-          PY_CMD: uv run ruff check .
+          GO_TOOL: golangci-lint
+          GO_CMD: run
+          RUST_CMD: clippy --all-targets --all-features
+          PY_CMD: run ruff check .
 
   clean:
     desc: Remove build artifacts for every detected project
@@ -46,8 +47,8 @@ tasks:
         vars:
           KIND: clean
           JS_SCRIPTS: clean
-          GO_CMD: go clean -cache -testcache
-          RUST_CMD: cargo clean
+          GO_CMD: clean -cache -testcache
+          RUST_CMD: clean
           PY_CMD: rm -rf build dist .pytest_cache .ruff_cache __pycache__
 
   _run:
@@ -139,7 +140,7 @@ tasks:
                 run_js_task "$manifest" {{.JS_SCRIPTS}}
                 ;;
               */go.mod)
-                run_optional_command "$(dirname "$manifest")" go {{.GO_CMD}}
+                run_optional_command "$(dirname "$manifest")" {{default "go" .GO_TOOL}} {{.GO_CMD}}
                 ;;
               */Cargo.toml)
                 run_optional_command "$(dirname "$manifest")" cargo {{.RUST_CMD}}
