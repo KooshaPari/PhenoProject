@@ -114,7 +114,7 @@ tasks:
             echo "{{.KIND}}: skipping $dir (no matching package script)"
           }
 
-          run_optional_command() {
+          run_detected_command() {
             dir=$1
             tool=$2
             shift 2
@@ -124,8 +124,8 @@ tasks:
               return 0
             fi
 
-            echo "{{.KIND}}: $dir ($*)"
-            (cd "$dir" && "$@")
+            echo "{{.KIND}}: $dir ($tool $*)"
+            (cd "$dir" && "$tool" "$@")
           }
 
           find_manifests() {
@@ -155,10 +155,10 @@ tasks:
                 run_js_task "$manifest" {{.JS_SCRIPTS}}
                 ;;
               */go.mod)
-                run_optional_command "$(dirname "$manifest")" {{default "go" .GO_TOOL}} {{.GO_CMD}}
+                run_detected_command "$(dirname "$manifest")" {{default "go" .GO_TOOL}} {{.GO_CMD}}
                 ;;
               */Cargo.toml)
-                run_optional_command "$(dirname "$manifest")" cargo {{.RUST_CMD}}
+                run_detected_command "$(dirname "$manifest")" cargo {{.RUST_CMD}}
                 ;;
               */pyproject.toml)
                 if [ "{{.KIND}}" = "clean" ]; then
@@ -166,7 +166,7 @@ tasks:
                   echo "clean: $dir (remove Python build caches)"
                   rm -rf "$dir/build" "$dir/dist" "$dir/.pytest_cache" "$dir/.ruff_cache" "$dir/__pycache__"
                 else
-                  run_optional_command "$(dirname "$manifest")" uv {{.PY_CMD}}
+                  run_detected_command "$(dirname "$manifest")" uv {{.PY_CMD}}
                 fi
                 ;;
             esac
