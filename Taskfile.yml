@@ -20,6 +20,11 @@ tasks:
   test:
     desc: Run tests for every detected project using its native toolchain
     cmds:
+      - |
+          if find tests -name '*_test.go' -type f | grep -q .; then
+            echo "test: ./tests (go test)"
+            GO111MODULE=off go test ./tests
+          fi
       - task: _run
         vars:
           KIND: test
