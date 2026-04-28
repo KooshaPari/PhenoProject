@@ -9,6 +9,10 @@ tasks:
   build:
     desc: Build every detected project using its native toolchain
     cmds:
+      - task: _go_smoke
+        vars:
+          KIND: build
+          GO_CMD: test -run '^$' ./tests
       - task: _run
         vars:
           KIND: build
@@ -20,11 +24,10 @@ tasks:
   test:
     desc: Run tests for every detected project using its native toolchain
     cmds:
-      - |
-          if find tests -name '*_test.go' -type f | grep -q .; then
-            echo "test: ./tests (go test)"
-            GO111MODULE=off go test ./tests
-          fi
+      - task: _go_smoke
+        vars:
+          KIND: test
+          GO_CMD: test ./tests
       - task: _run
         vars:
           KIND: test
@@ -55,6 +58,18 @@ tasks:
           GO_CMD: clean -cache -testcache
           RUST_CMD: clean
           PY_CMD: rm -rf build dist .pytest_cache .ruff_cache __pycache__
+
+  _go_smoke:
+    internal: true
+    silent: true
+    cmds:
+      - |
+          set -eu
+
+          if find tests -name '*_test.go' -type f | grep -q .; then
+            echo "{{.KIND}}: ./tests (go {{.GO_CMD}})"
+            GO111MODULE=off go {{.GO_CMD}}
+          fi
 
   _run:
     internal: true
