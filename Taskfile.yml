@@ -135,6 +135,21 @@ tasks:
             fi
           }
 
+          has_lockfile() {
+            dir=$1
+            [ -f "$dir/package-lock.json" ] \
+              || [ -f "$dir/npm-shrinkwrap.json" ] \
+              || [ -f "$dir/pnpm-lock.yaml" ] \
+              || [ -f "$dir/bun.lock" ] \
+              || [ -f "$dir/bun.lockb" ] \
+              || [ -f "$dir/yarn.lock" ]
+          }
+
+          has_installed_dependencies() {
+            dir=$1
+            [ -d "$dir/node_modules" ]
+          }
+
           has_parent_package() {
             dir=$(dirname "$(dirname "$1")")
             while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
@@ -158,6 +173,16 @@ tasks:
 
               dir=$(dirname "$manifest")
               pm=$(package_manager "$dir")
+
+              if ! has_lockfile "$dir"; then
+                echo "{{.KIND}}: skipping $dir (no JavaScript lockfile)"
+                continue
+              fi
+
+              if ! has_installed_dependencies "$dir"; then
+                echo "{{.KIND}}: skipping $dir (dependencies not installed)"
+                continue
+              fi
 
               for script in {{.SCRIPTS}}; do
                 if has_script "$manifest" "$script"; then
@@ -183,6 +208,7 @@ tasks:
           fi
 
           find . \
+            -maxdepth 3 \
             \( -path '*/.git' -o -path '*/node_modules' -o -path '*/.venv' \) -prune \
             -o -name pyproject.toml -type f -print \
             | sort \
