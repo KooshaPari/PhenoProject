@@ -228,8 +228,8 @@ tasks:
               dir=$(dirname "$manifest")
               pm=$(package_manager "$dir")
 
-              if ! has_lockfile "$dir"; then
-                echo "{{.KIND}}: skipping $dir (no JavaScript lockfile)"
+              if ! has_lockfile "$dir" && ! has_installed_dependencies "$dir"; then
+                echo "{{.KIND}}: skipping $dir (no JavaScript lockfile or installed dependencies)"
                 continue
               fi
 
