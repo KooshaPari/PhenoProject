@@ -208,7 +208,7 @@ tasks:
           fi
 
           find . \
-            -maxdepth 5 \
+            -maxdepth 3 \
             \( -path '*/.git' -o -path '*/node_modules' -o -path '*/.venv' \) -prune \
             -o -name pyproject.toml -type f -print \
             | sort \
