@@ -69,7 +69,7 @@ tasks:
 
           package_manager() {
             dir=$1
-            while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+            while [ "$dir" != "/" ]; do
               if [ -f "$dir/pnpm-workspace.yaml" ] || [ -f "$dir/pnpm-lock.yaml" ]; then
                 echo pnpm
                 return 0
@@ -84,6 +84,7 @@ tasks:
                 return 0
               fi
 
+              [ "$dir" = "." ] && break
               dir=$(dirname "$dir")
             done
 
@@ -97,7 +98,7 @@ tasks:
 
             if [ "{{.KIND}}" = "clean" ]; then
               echo "clean: $dir (remove JavaScript build artifacts)"
-              rm -rf "$dir/dist" "$dir/build" "$dir/coverage" "$dir/logs" "$dir/.turbo" "$dir/.next" "$dir/.react-router"
+              rm -rf "$dir/dist" "$dir/build" "$dir/coverage" "$dir/logs" "$dir/.turbo" "$dir/.next" "$dir/.react-router" "$dir/.vite" "$dir/.vitest"
               return 0
             fi
 
@@ -130,7 +131,7 @@ tasks:
 
           find_manifests() {
             find . \
-              -mindepth 2 \
+              -mindepth 1 \
               -maxdepth 6 \
               \( -path '*/.git' \
                 -o -path '*/node_modules' \
