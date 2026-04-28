@@ -20,10 +20,7 @@ tasks:
         vars:
           KIND: build
           SCRIPTS: build
-      - task: _python
-        vars:
-          KIND: build
-          CMD: run --no-project python -m compileall -q . -x '(^|/)(\\.venv|__pycache__|\\.git|node_modules)/'
+      - task: _python_syntax
 
   test:
     desc: Run detected project tests
@@ -262,12 +259,56 @@ tasks:
           fi
 
           find . \
-            -maxdepth 3 \
-            \( -path '*/.git' -o -path '*/node_modules' -o -path '*/.venv' \) -prune \
+            -maxdepth 6 \
+            \( -path '*/.git' -o -path '*/node_modules' -o -path '*/.venv' \
+              -o -path '*/__pycache__' -o -path '*/.pytest_cache' \) -prune \
             -o -name pyproject.toml -type f -print \
             | sort \
             | while IFS= read -r manifest; do
               dir=$(dirname "$manifest")
               echo "{{.KIND}}: $dir (uv {{.CMD}})"
               (cd "$dir" && uv {{.CMD}})
+            done
+
+  _python_syntax:
+    internal: true
+    silent: true
+    cmds:
+      - |
+          set -eu
+
+          if ! command -v uv >/dev/null 2>&1; then
+            echo "build: skipping Python projects (uv not installed)"
+            exit 0
+          fi
+
+          find . \
+            -maxdepth 6 \
+            \( -path '*/.git' -o -path '*/node_modules' -o -path '*/.venv' \
+              -o -path '*/__pycache__' -o -path '*/.pytest_cache' \) -prune \
+            -o -name pyproject.toml -type f -print \
+            | sort \
+            | while IFS= read -r manifest; do
+              dir=$(dirname "$manifest")
+              echo "build: $dir (python syntax check)"
+              (cd "$dir" && uv run --no-project python - <<'PY'
+          import ast
+          import pathlib
+          import sys
+
+          ignored = {".git", ".venv", "__pycache__", "node_modules"}
+          failed = False
+
+          for path in sorted(pathlib.Path(".").rglob("*.py")):
+              if any(part in ignored for part in path.parts):
+                  continue
+              try:
+                  ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+              except SyntaxError as exc:
+                  failed = True
+                  print(f"{path}:{exc.lineno}:{exc.offset}: {exc.msg}", file=sys.stderr)
+
+          raise SystemExit(1 if failed else 0)
+          PY
+              )
             done
