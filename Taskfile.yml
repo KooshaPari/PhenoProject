@@ -76,8 +76,9 @@ tasks:
 
           if find tests -name '*_test.go' -type f | grep -q .; then
             echo "go: GO111MODULE=off go {{.GO_ARGS}}"
-            mkdir -p .cache/go-build
-            GO111MODULE=off GOCACHE="$PWD/.cache/go-build" go {{.GO_ARGS}}
+            gocache=$(mktemp -d "${TMPDIR:-/tmp}/pheno-go-cache.XXXXXX")
+            trap 'rm -rf "$gocache"' EXIT
+            GO111MODULE=off GOCACHE="$gocache" go {{.GO_ARGS}}
           fi
 
   _go_lint:
