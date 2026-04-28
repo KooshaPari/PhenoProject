@@ -7,7 +7,7 @@ tasks:
       - task --list
 
   build:
-    desc: Build detected JavaScript/TypeScript projects and root smoke tests
+    desc: Build detected projects and run lightweight compile checks
     cmds:
       - task: _go_smoke
         vars:
@@ -16,6 +16,10 @@ tasks:
         vars:
           KIND: build
           SCRIPTS: build
+      - task: _python
+        vars:
+          KIND: build
+          CMD: run python -m compileall .
 
   test:
     desc: Run detected project tests
