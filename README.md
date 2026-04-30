@@ -18,6 +18,7 @@ Active. Aggregates two product subprojects in their own technology stacks.
 | `rust/Planify/` | Planify — TypeScript/Bun monorepo (apps + packages, Turbo, pnpm/bun) |
 | `go/KaskMan/` | KaskMan — Go-based task/project manager |
 | `tests/` | Workspace-level tests |
+| `docs/guides/` | Workspace guides and traceability docs |
 | `docs/worklogs/` | Per-session worklog entries |
 | `AGENTS.md` | Agent governance |
 | `CLAUDE.md` | Claude Code project instructions |
