@@ -192,11 +192,13 @@ class APIClient {
 
   async restartServer() {
     try {
+      const previousConfig = this.serverConfig;
+
       if (this.serverProcess) {
         await this.stopServer();
       }
 
-      return await this.startServer(this.serverConfig);
+      return await this.startServer(previousConfig || {});
     } catch (error) {
       this.logger.error('Failed to restart server:', error);
       throw error;

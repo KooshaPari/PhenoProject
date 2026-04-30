@@ -1,6 +1,6 @@
 # Work Audit — PhenoProject
 
-**Index:** See `/Users/kooshapari/CodeProjects/Phenotype/repos/worklogs/README.md`
+**Index:** See `docs/worklogs/` for the project-local worklog set.
 
 ## Purpose
 
@@ -19,6 +19,9 @@ All entries MUST be organized into one of these categories:
 | PERFORMANCE | worklogs/PERFORMANCE.md | Optimization, benchmarking, profiling |
 | RESEARCH | worklogs/RESEARCH.md | Starred repo analysis, technology research |
 | GOVERNANCE | worklogs/GOVERNANCE.md | Policy, evidence, quality gates, process |
+
+GOVERNANCE entries should be used for repository policy changes, docs
+traceability standards, evidence requirements, and other cross-cutting rules.
 
 ## When to Write
 
@@ -54,4 +57,4 @@ Each entry should include:
 
 ---
 
-See parent worklog index at `/Users/kooshapari/CodeProjects/Phenotype/repos/worklogs/README.md` for aggregation tools and cross-project analysis.
+See `docs/worklogs/` for aggregation tools and cross-project analysis.
