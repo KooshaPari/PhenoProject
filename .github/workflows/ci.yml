@@ -15,6 +15,6 @@ permissions:
 
 jobs:
   rust-ci:
-    uses: KooshaPari/phenoShared/.github/workflows/ci.yml@main
+    uses: KooshaPari/phenoShared/.github/workflows/ci.yml@0bae4207e76b6dd73435860e04c71cc67ec0b848
     with:
       language: rust
