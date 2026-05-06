@@ -41,7 +41,6 @@ pnpm-debug.log*
 .env.development.local
 .env.production
 .env.production.local
-.env.example  # Template only — copy to .env and fill in real values
 
 # Python virtual environments
 .venv/
@@ -51,10 +50,6 @@ ENV/
 # Doppler / secrets manager
 .doppler/
 
-# Secrets rotation scripts
-scripts/
-scripts/**
-
 # Vercel
 .vercel
 
@@ -62,22 +57,12 @@ scripts/**
 .turbo
 
 ## Django ##
-venv
-.venv
 *.pyc
 staticfiles
 mediafiles
-.env
-.DS_Store
 logs/
 htmlcov/
 .coverage
-
-node_modules/
-assets/dist/
-npm-debug.log
-yarn-error.log
-pnpm-debug.log
 
 # Editor directories and files
 .idea
@@ -94,33 +79,24 @@ package-lock.json
 # lock files
 package-lock.json
 
-
-
 .secrets
 tmp/
 
 ## packages
-dist
 .temp/
 deploy/selfhost/plane-app/
 
 ## Storybook
 *storybook.log
 output.css
+storybook-static
 
 dev-editor
+
 # Redis
 *.rdb
 *.rdb.gz
 
-storybook-static
-
 CLAUDE.md
 
-build/
-.react-router/
-
-build/
-.react-router/
 temp/
-scripts/
