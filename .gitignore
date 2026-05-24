@@ -41,3 +41,8 @@ dist/
 build/
 *.log
 npm-debug.log*
+
+# ===== Standard auto-generated hygiene ignores (do not edit manually) =====
+!.env.example
+target/
+# ===== End standard hygiene ignores =====
