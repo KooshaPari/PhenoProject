@@ -15,6 +15,6 @@ permissions:
 
 jobs:
   rust-ci:
-    uses: KooshaPari/phenoShared/.github/workflows/ci.yml@main
+    uses: KooshaPari/phenoShared/.github/workflows/ci.yml@72b9c6cbdb24c49189b0e7c7395d874830d1ed87 # pinned from @ref; org SHA may shift on new commits
     with:
       language: rust
