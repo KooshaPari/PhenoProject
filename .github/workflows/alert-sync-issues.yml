@@ -1,6 +1,9 @@
 name: Alert Sync Issues
 permissions:
   contents: read
+  issues: write
+  security-events: read
+  actions: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

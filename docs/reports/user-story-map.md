@@ -2,9 +2,9 @@
 
 - **Repo:** PhenoProject
 - **Authoritative FR doc:** [`FUNCTIONAL_REQUIREMENTS.md`](../../FUNCTIONAL_REQUIREMENTS.md)
-- **Journey standard:** [`docs/operations/journey-traceability.md`](../operations/journey-traceability.md)
+- **Journey standard:** [`../../operations/journey-traceability.md`](../../operations/journey-traceability.md)
 - **Status date:** 2026-06-05
-- **Note:** All seven FRs are stubs (`Status: Stub`, `Test Status: Not yet written`). Source / test / journey columns are populated where the existing code/test layout already maps to the intent, and `[ ]` boxes mark which rows still need a journey manifest, code, test, and gate wired up. The FR-005 / FR-006 / FR-007 rows are the lowest-coverage rows because they have no test or journey artifact yet.
+- **Note:** All seven FRs are stubs (`Status: Stub`, `Test Status: Not yet written`). Source / test / journey columns are populated where the existing code/test layout already maps to the intent, and `[ ]` boxes mark which rows still need a journey manifest, code, test, and gate wired up. The FR-005 / FR-006 / FR-007 rows are the lowest-coverage rows: FR-005 has no test or journey artifact yet; FR-006 has a partial test (auth touches settings only); FR-007 has a partial test (api token only).
 
 ## Legend
 

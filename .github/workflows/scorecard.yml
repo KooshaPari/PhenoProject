@@ -7,13 +7,15 @@ on:
     branches: [main]
 permissions:
   contents: read
+  security-events: write
+  id-token: write
+  actions: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 
-permissions: read-all
 
 jobs:
   analysis:
