@@ -23,9 +23,6 @@ cd PhenoProject
 
 # Go    (go/ subtree)
 ( cd go     && go build ./... && go test ./... && go vet ./... )
-
-# Python (python/ subtree)
-( cd python && uv sync && uv run pytest && uv run ruff check . )
 ```
 
 ## Branch naming
