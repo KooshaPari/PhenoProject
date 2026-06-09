@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 set -e
 python manage.py wait_for_db
 # Wait for migrations
