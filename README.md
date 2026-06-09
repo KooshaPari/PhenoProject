@@ -1,3 +1,14 @@
+## Work State
+
+| Field | Value |
+|---|---|
+| Last commit | 2026-06-08 |
+| Open issues | 0 |
+| Open PRs | 6 |
+| Focus | npm dependency updates + planify/kaskman integration |
+
+Progress: █████░░░░░ 50%
+
 # PhenoProject
 
 [![Build](https://img.shields.io/github/actions/workflow/status/KooshaPari/PhenoProject/ci.yml?branch=main&label=build)](https://github.com/KooshaPari/PhenoProject/actions)
