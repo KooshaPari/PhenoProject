@@ -1,4 +1,5 @@
 #!/bin/bash -e
+set -euo pipefail
 
 print_header(){
     clear
