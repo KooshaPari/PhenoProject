@@ -1,13 +1,19 @@
 name: Alert Sync Issues
+permissions:
+  contents: read
+  issues: write
+  security-events: read
+  actions: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 on:
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch:
-
-permissions:
-  contents: read
-
 jobs:
   alert-sync:
     uses: KooshaPari/phenoShared/.github/workflows/alert-sync-issues.yml@438e2e71e448c9f1f47f184d3ca4acbb28928677

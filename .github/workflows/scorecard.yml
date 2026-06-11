@@ -5,8 +5,17 @@ on:
     - cron: '17 3 * * 6'
   push:
     branches: [main]
+permissions:
+  contents: read
+  security-events: write
+  id-token: write
+  actions: read
 
-permissions: read-all
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
 
 jobs:
   analysis:
