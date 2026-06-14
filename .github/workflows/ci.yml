@@ -19,6 +19,6 @@ concurrency:
 
 jobs:
   rust-ci:
-    uses: KooshaPari/phenoShared/.github/workflows/ci.yml@438e2e71e448c9f1f47f184d3ca4acbb28928677
+    uses: KooshaPari/phenoShared/.github/workflows/ci.yml@95d94d5d77015368ee802130bf4feaae0b3566db
     with:
       language: rust
