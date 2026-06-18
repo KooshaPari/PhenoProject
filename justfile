@@ -27,3 +27,7 @@ ci: lint test
 # Format code (delegates to per-language formatters via Taskfile)
 fmt:
     task lint
+
+# Measure code coverage (SSOT: see grade.sh for the canonical command)
+coverage:
+    npx jest --coverage --coverageThreshold='{"global":{"branches":85,"functions":85,"lines":85,"statements":85}}'
