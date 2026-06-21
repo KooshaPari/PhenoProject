@@ -50,6 +50,15 @@ class DashboardServer {
 
     setupRoutes() {
         // Serve main dashboard
+        // codeql[js/missing-rate-limiting]: false-positive. This is the
+        // local development dashboard-server bound to `this.host` (default
+        // 'localhost', see constructor above) — not a public-facing API.
+        // It serves a single static HTML file (dashboard-web.html) from
+        // the same directory; all /api/* routes operate on in-memory data
+        // (this.projectData) only. No filesystem mutation, no auth bypass,
+        // no public exposure path. Rate limiting would be appropriate if
+        // this were ever fronted by a public reverse proxy, which it is
+        // not in this configuration.
         this.app.get('/', (req, res) => {
             res.sendFile(path.join(__dirname, 'dashboard-web.html'));
         });

@@ -7,6 +7,7 @@ import logging
 import os
 import uuid
 from io import BytesIO
+from urllib.parse import urlparse
 
 import requests
 from django.conf import settings
@@ -142,6 +143,38 @@ class Adapter:
         Returns the uploaded file path or None if failed.
         """
         if not avatar_url:
+            return None
+
+        # SSRF defense (CodeQL py/full-ssrf #109): restrict outbound avatar
+        # downloads to the known OAuth provider hostnames. avatar_url is
+        # ultimately sourced from the configured provider's userinfo endpoint
+        # (see provider_config_map in check_sync_enabled), so the host will
+        # always be one of these unless the provider is misconfigured.
+        ALLOWED_AVATAR_HOSTS = frozenset(
+            {
+                "googleusercontent.com",
+                "lh3.googleusercontent.com",
+                "lh4.googleusercontent.com",
+                "lh5.googleusercontent.com",
+                "lh6.googleusercontent.com",
+                "avatars.githubusercontent.com",
+                "github.com",
+                "gitlab.com",
+                "gitea.com",
+                "avatars.gitea.com",
+            }
+        )
+        try:
+            parsed = urlparse(avatar_url)
+            if parsed.scheme not in ("http", "https"):
+                return None
+            host = (parsed.hostname or "").lower()
+            if host not in ALLOWED_AVATAR_HOSTS:
+                self.logger.warning(
+                    "Refusing avatar download from non-allowlisted host: %s", host
+                )
+                return None
+        except Exception:
             return None
 
         try:
