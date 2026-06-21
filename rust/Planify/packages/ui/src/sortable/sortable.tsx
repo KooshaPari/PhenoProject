@@ -86,6 +86,11 @@ export function Sortable<T>({ data, render, onChange, keyExtractor, containerCla
   }, [data, keyExtractor, onChange]);
 
   const enhancedData = useMemo(() => {
+    // codeql[js/insecure-randomness]: false-positive. Math.random() here is
+    // used solely as a stable React DOM list-rendering key for items that
+    // have no server-supplied id. This is not a security context (no auth,
+    // no token, no session, no nonce) — collision risk is acceptable for
+    // local UI keying and would be re-keyed on next render regardless.
     const uuid = id ? id : Math.random().toString(36).substring(7);
     return data.map((item) => ({ ...item, __uuid__: uuid }));
   }, [data, id]);
